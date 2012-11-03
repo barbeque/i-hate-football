@@ -47,6 +47,13 @@ function love.load()
 	-- middle of red carpet
 	tileQuads[3] = love.graphics.newQuad(3 * tileSize, 9 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
 
+	-- top wall
+	tileQuads[4] = love.graphics.newQuad(10 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+
+	for x = 1, mapWidth do
+		map[x][1] = 4
+	end
+
 	tileSetBatch = love.graphics.newSpriteBatch(tileSetImage, tilesDisplayHeight * tilesDisplayWidth)
 	updateVisibleBatch()
 end
