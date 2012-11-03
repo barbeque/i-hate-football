@@ -49,10 +49,33 @@ function love.load()
 
 	-- top wall
 	tileQuads[4] = love.graphics.newQuad(10 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+	-- down wall
+	tileQuads[5] = love.graphics.newQuad(10 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+
+	-- top left corner
+	-- top wall
+	tileQuads[6] = love.graphics.newQuad(8 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+	-- top right corner
+	tileQuads[7] = love.graphics.newQuad(9 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+	-- bottom left corner
+	tileQuads[8] = love.graphics.newQuad(8 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+	-- bottom right corner
+	tileQuads[9] = love.graphics.newQuad(9 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
 
 	for x = 1, mapWidth do
 		map[x][1] = 4
+		map[x][mapHeight] = 4
 	end
+
+	for y = 1, mapHeight do
+		map[1][y] = 5
+		map[mapWidth][y] = 5
+	end
+
+	map[1][1] = 6
+	map[mapWidth][1] = 7
+	map[1][mapHeight] = 8
+	map[mapWidth][mapHeight] = 9
 
 	tileSetBatch = love.graphics.newSpriteBatch(tileSetImage, tilesDisplayHeight * tilesDisplayWidth)
 	updateVisibleBatch()
