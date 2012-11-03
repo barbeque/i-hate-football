@@ -22,7 +22,7 @@ function love.load()
 	for x = 1, mapWidth do
 		map[x] = {}
 		for y = 1, mapHeight do
-			map[x][y] = math.random(0, 3)
+			map[x][y] = 0--math.random(0, 3)
 		end
 	end
 
