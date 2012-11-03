@@ -62,6 +62,9 @@ function love.load()
 	-- bottom right corner
 	tileQuads[9] = love.graphics.newQuad(9 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
 
+	-- wall front
+	tileQuads[10] = love.graphics.newQuad(8 * tileSize, 0 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+
 	for x = 1, mapWidth do
 		map[x][1] = 4
 		map[x][mapHeight] = 4
@@ -76,6 +79,10 @@ function love.load()
 	map[mapWidth][1] = 7
 	map[1][mapHeight] = 8
 	map[mapWidth][mapHeight] = 9
+
+	for x = 2, mapWidth - 1 do
+		map[x][2] = 10
+	end
 
 	tileSetBatch = love.graphics.newSpriteBatch(tileSetImage, tilesDisplayHeight * tilesDisplayWidth)
 	updateVisibleBatch()
