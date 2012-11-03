@@ -1,0 +1,2 @@
+# Ignore Windows shorcuts which shilbert is using to launch love
+*.lnk

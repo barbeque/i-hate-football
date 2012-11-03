@@ -1,0 +1,14 @@
+# By default, autodetect whether text or not.
+# Do not rely on core.autocrlf
+*		text=auto
+
+# normalize to LF in repo, native when checked out
+*.lua	text
+*.md	text
+
+# binary files
+*.png	binary
+*.jpg	binary
+*.mp3	binary
+*.ogg	binary
+*.wav	binary
