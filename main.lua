@@ -9,6 +9,8 @@ local zoomX, zoomY
 local tileSetImage
 local tileQuads = {}
 local tileSetSprite
+local dudeBatch
+local tileSetBatch
 
 function love.load()
 	mapWidth = math.floor(love.graphics.getWidth() / tileSize + 0.5)
@@ -65,6 +67,11 @@ function love.load()
 	-- wall front
 	tileQuads[10] = love.graphics.newQuad(8 * tileSize, 0 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
 
+	-- man hair
+	tileQuads[11] = love.graphics.newQuad(14 * tileSize, 13 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+	-- man body
+	tileQuads[12] = love.graphics.newQuad(14 * tileSize, 14 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
+
 	for x = 1, mapWidth do
 		map[x][1] = 4
 		map[x][mapHeight] = 4
@@ -86,6 +93,10 @@ function love.load()
 
 	tileSetBatch = love.graphics.newSpriteBatch(tileSetImage, tilesDisplayHeight * tilesDisplayWidth)
 	updateVisibleBatch()
+
+	dudeBatch = love.graphics.newSpriteBatch(tileSetImage, 2)
+	dudeBatch:addq(tileQuads[11], 0, 0)
+	dudeBatch:addq(tileQuads[12], 0, tileSize)
 end
 
 function updateVisibleBatch()
@@ -114,6 +125,9 @@ function love.draw()
 	xPos = math.floor(-zoomX * (mapX % 1) * tileSize)
 	yPos = math.floor(-zoomY * (mapY % 1) * tileSize)
 	love.graphics.draw(tileSetBatch, xPos, yPos)
+
+	-- draw the fat chinese computer science student on the field
+	love.graphics.draw(dudeBatch, 80, 200)
 
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
 end
