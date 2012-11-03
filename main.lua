@@ -13,6 +13,8 @@ local dudeBatch
 local tileSetBatch
 
 function love.load()
+	love.graphics.setCaption("I HATE FOOTBALL")
+
 	mapWidth = math.floor(love.graphics.getWidth() / tileSize + 0.5)
 	mapHeight = math.floor(love.graphics.getHeight() / tileSize + 0.5)
 
