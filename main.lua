@@ -81,15 +81,18 @@ end
 function hit_test(x, y, team)
 	for n, player in ipairs(players) do
 		if player.team == team then
-			local d = distance(player.x, player.y, x, y)
-			if d < PLAYER_RADIUS then
-				return player, false
-			end
-
+			local d
+			
 			d = distance(player.x+player.dx, player.y+player.dy, x, y)
 			if d < PLAYER_RADIUS*0.5 then
 				return player, true
 			end
+
+			d = distance(player.x, player.y, x, y)
+			if d < PLAYER_RADIUS then
+				return player, false
+			end
+
 		end
 	end
 end
