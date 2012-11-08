@@ -4,6 +4,11 @@ local TEAM_COLORS = {{0,0,255}, {255,0,0}}
 local PLAYER_RADIUS = 16
 local PLAYERS_PER_TEAM = 5
 
+-- game states
+local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
+local GSTATE_COACHING = 1 -- pointing them in a direction, molesting them a little
+local GSTATE_RUNNING = 2 -- the game is running. you can't do anything but cry
+
 -- mouse states
 local STATE_NONE = 0
 local STATE_DRAG_PLAYER = 1
@@ -13,6 +18,7 @@ local background
 local football_image
 local players = {}
 
+local game_state = GSTATE_PLACEMENT
 local mouse_state = STATE_NONE
 local cur_player = nil
 -- 1 or 2
@@ -77,6 +83,18 @@ function love.draw()
 	love.graphics.print(team_1_prefix..TEAM_NAMES[1] .. ": "..players_on_team(1).."/"..PLAYERS_PER_TEAM, 10, 10+12*1)
 	love.graphics.print(team_2_prefix..TEAM_NAMES[2] .. ": "..players_on_team(2).."/"..PLAYERS_PER_TEAM, 10, 10+12*2)
 	love.graphics.print("T to swap teams", 10, 10+12*3)
+
+	hudText = "";
+	if game_state == GSTATE_PLACEMENT then
+		hudText = "Placing players..."
+	elseif game_state == GSTATE_COACHING then
+		hudText = "Directing players..."
+	elseif game_state == GSTATE_RUNNING then
+		hudText = "Players are playing the game (idiots)"
+	else
+		hudText = "Unknown game state (".. game_state ..")"
+	end
+	love.graphics.print(hudText, 10, 10 + 12 * 4)
 end
 
 function draw_player(player)
