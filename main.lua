@@ -1,27 +1,21 @@
-local background
-local players = {}
 
--- local TYPE_LINE = 0
--- local TYPE_LINE_SEGMENT = 1
--- local TYPE_CIRCLE = 2
--- local TYPE_SPIRAL = 3
--- local TYPE_BOX = 4
--- local TYPE_SEEK_BALL = 5
--- etc...
+local TEAM_NAMES = {"BLUE", "RED"}
+local TEAM_COLORS = {{0,0,255}, {255,0,0}}
+local PLAYER_RADIUS = 16
+local PLAYERS_PER_TEAM = 5
 
+-- mouse states
 local STATE_NONE = 0
 local STATE_DRAG_PLAYER = 1
 local STATE_DRAG_DIR = 2
 
-local state = STATE_NONE
+local background
+local players = {}
+
+local mouse_state = STATE_NONE
 local cur_player = nil
-
-local TEAM_COLORS = {[0]={0,0,255}, [1]={255,0,0}}
-local PLAYER_RADIUS = 16
-
-local PLAYERS_PER_TEAM = 5
-
-local cur_team = 0
+-- 1 or 2
+local cur_team = 1
 
 function love.load()
 	love.graphics.setCaption("I HATE FOOTBALL")
@@ -31,15 +25,15 @@ end
 
 function love.update(dt)
 	local x, y = love.mouse.getPosition()	
-	if state == STATE_DRAG_PLAYER then
-		if cur_team == 0  then
+	if mouse_state == STATE_DRAG_PLAYER then
+		if cur_team == 1  then
 			x = math.min(x, 1280/2 - PLAYER_RADIUS)
-		else
+		else -- 2
 			x = math.max(x, 1280/2 + PLAYER_RADIUS)
 		end
 		cur_player.x = x
 		cur_player.y = y
-	elseif state == STATE_DRAG_DIR then
+	elseif mouse_state == STATE_DRAG_DIR then
 		cur_player.dx = x - cur_player.x
 		cur_player.dy = y - cur_player.y
 	end
@@ -52,7 +46,16 @@ function love.draw()
 		draw_player(player)
 	end
 
-	love.graphics.print("fps: "..love.timer.getFPS().." team (T): "..cur_team, 10, 10)
+	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
+	local team_1_prefix = "      "
+	local team_2_prefix = team_1_prefix
+	if cur_team == 1 then
+		team_1_prefix = "--> "
+	else
+		team_2_prefix = "--> "
+	end
+	love.graphics.print(team_1_prefix..TEAM_NAMES[1] .. ": "..players_on_team(1).."/"..PLAYERS_PER_TEAM, 10, 10+12*1)
+	love.graphics.print(team_2_prefix..TEAM_NAMES[2] .. ": "..players_on_team(2).."/"..PLAYERS_PER_TEAM, 10, 10+12*2)
 end
 
 function draw_player(player)
@@ -82,7 +85,7 @@ function hit_test(x, y, team)
 	for n, player in ipairs(players) do
 		if player.team == team then
 			local d
-			
+
 			d = distance(player.x+player.dx, player.y+player.dy, x, y)
 			if d < PLAYER_RADIUS*0.5 then
 				return player, true
@@ -98,7 +101,7 @@ function hit_test(x, y, team)
 end
 
 function love.mousepressed(x, y, button)
-	if state ~= STATE_NONE then
+	if mouse_state ~= STATE_NONE then
 		return
 	end
 
@@ -107,9 +110,9 @@ function love.mousepressed(x, y, button)
 		if over_player ~= nil then
 			cur_player = over_player
 			if hit_dir_handle then
-				state = STATE_DRAG_DIR
+				mouse_state = STATE_DRAG_DIR
 			else
-				state = STATE_DRAG_PLAYER
+				mouse_state = STATE_DRAG_PLAYER
 			end
 		else
 			place_new_player(x,y)
@@ -126,10 +129,10 @@ function place_new_player(x,y)
 	if players_on_team(cur_team) >= PLAYERS_PER_TEAM then
 		return
 	end
-	if cur_team == 0 and x > (1280/2 - PLAYER_RADIUS) then
+	if cur_team == 1 and x > (1280/2 - PLAYER_RADIUS) then
 		return
 	end
-	if cur_team == 1 and x < (1280/2 + PLAYER_RADIUS) then
+	if cur_team == 2 and x < (1280/2 + PLAYER_RADIUS) then
 		return
 	end
 	cur_player = {
@@ -140,7 +143,7 @@ function place_new_player(x,y)
 		team=cur_team
 	}
 	table.insert(players, cur_player)
-	state = STATE_DRAG_DIR
+	mouse_state = STATE_DRAG_DIR
 end
 
 function remove_player(p)
@@ -166,16 +169,16 @@ end
 function love.mousereleased(x, y, button)
 	if button == "l" then
 		cur_player = nil
-		state = STATE_NONE
+		mouse_state = STATE_NONE
 	end
 end
 
 function love.keypressed(key, unicode)
-	if state == STATE_NONE and key == "t" then
-		if cur_team == 0 then
-			cur_team = 1
+	if mouse_state == STATE_NONE and key == "t" then
+		if cur_team == 1 then
+			cur_team = 2
 		else
-			cur_team = 0
+			cur_team = 1
 		end
 	end
 end
