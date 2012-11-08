@@ -58,7 +58,7 @@ function love.update(dt)
 		for n, player in ipairs(players) do
 			-- normalize dx, dy
 			length = math.sqrt(player.dx * player.dx + player.dy * player.dy)
-			if length > 0 then
+			if length > 5.0 then
 				player_speed = 500
 
 				-- figure out how much they move this frame
@@ -76,7 +76,6 @@ function love.update(dt)
 		-- when the timer runs out we're done
 		turn_time_remaining = turn_time_remaining - dt
 		if turn_time_remaining <= 0 then
-			print("Stop running!!!!")
 			stop_running()
 		end
 	else
