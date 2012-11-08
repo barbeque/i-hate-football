@@ -22,6 +22,7 @@ local game_state = GSTATE_PLACEMENT
 local mouse_state = STATE_NONE
 local cur_player = nil
 local t = 0
+local turn_time_remaining = 0
 -- 1 or 2
 local cur_team = 1
 
@@ -51,19 +52,46 @@ end
 
 function love.update(dt)
 	t = t + dt
-	local x, y = love.mouse.getPosition()	
-	if mouse_state == STATE_DRAG_PLAYER then
-		-- don't allow dragging into the other team's half of the field
-		if cur_team == 1  then
-			x = math.min(x, 1280/2 - PLAYER_RADIUS)
-		else -- 2
-			x = math.max(x, 1280/2 + PLAYER_RADIUS)
+	print(dt)
+
+	if game_state == GSTATE_RUNNING then
+		-- move each player towards their "goal"
+		for n, player in ipairs(players) do
+			-- normalize dx, dy
+			length = math.sqrt(player.dx * player.dx + player.dy * player.dy)
+			if length > 0 then
+				player_speed = 500
+
+				x_distance = (player.dx / length) * (player_speed * dt)
+				y_distance = (player.dy / length) * (player_speed * dt)
+
+				player.x = player.x + x_distance
+				player.y = player.y + y_distance
+				player.dx = player.dx - x_distance
+				player.dy = player.dy - y_distance
+			end
 		end
-		cur_player.x = x
-		cur_player.y = y
-	elseif mouse_state == STATE_DRAG_DIR then
-		cur_player.dx = x - cur_player.x
-		cur_player.dy = y - cur_player.y
+
+		-- when the timer runs out we're done
+		turn_time_remaining = turn_time_remaining - t
+		if turn_time_remaining <= 0 then
+			stop_running()
+		end
+	else
+		local x, y = love.mouse.getPosition()	
+		if mouse_state == STATE_DRAG_PLAYER then
+			-- don't allow dragging into the other team's half of the field
+			if cur_team == 1  then
+				x = math.min(x, 1280/2 - PLAYER_RADIUS)
+			else -- 2
+				x = math.max(x, 1280/2 + PLAYER_RADIUS)
+			end
+			cur_player.x = x
+			cur_player.y = y
+		elseif mouse_state == STATE_DRAG_DIR then
+			cur_player.dx = x - cur_player.x
+			cur_player.dy = y - cur_player.y
+		end
 	end
 end
 
@@ -236,6 +264,14 @@ function player_with_football()
 	return nil
 end
 
+function start_running_turn()
+	game_state = GSTATE_RUNNING
+	turn_time_remaining = 6 -- i dunno, that seems fair
+end
+
+function stop_running()
+	game_state = GSTATE_COACHING
+end
 
 function love.mousereleased(x, y, button)
 	if button == "l" then
@@ -255,7 +291,7 @@ function love.keypressed(key, unicode)
 			end
 		elseif key == "e" then
 			-- eventually we'll do some real logic here. for now put the state in running
-			game_state = GSTATE_RUNNING
+			start_running_turn()
 		end
 	end
 
