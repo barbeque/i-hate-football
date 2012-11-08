@@ -26,6 +26,7 @@ end
 function love.update(dt)
 	local x, y = love.mouse.getPosition()	
 	if mouse_state == STATE_DRAG_PLAYER then
+		-- don't allow dragging into the other team's half of the field
 		if cur_team == 1  then
 			x = math.min(x, 1280/2 - PLAYER_RADIUS)
 		else -- 2
@@ -174,6 +175,7 @@ function love.mousereleased(x, y, button)
 end
 
 function love.keypressed(key, unicode)
+	-- switch teams when "T" is pressed
 	if mouse_state == STATE_NONE and key == "t" then
 		if cur_team == 1 then
 			cur_team = 2
