@@ -73,8 +73,8 @@ function love.draw()
 		-- vibrate that bitch but just softly
 		alpha = 1.6
 		beta = 0.7
-		offsetX = 2 * math.sin(3 * t + alpha)
-		offsetY = 1.2 * math.cos(4.1 * t + beta)
+		offsetX = 6 * math.sin(15 * t + alpha)
+		offsetY = 2.5 * math.cos(41.1 * t + beta)
 	end
 
 	love.graphics.draw(background, offsetX, offsetY)
