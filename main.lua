@@ -265,7 +265,7 @@ end
 
 function start_running_turn()
 	game_state = GSTATE_RUNNING
-	turn_time_remaining = 6 -- i dunno, that seems fair
+	turn_time_remaining = 12 -- i dunno, that seems fair
 end
 
 function stop_running()
