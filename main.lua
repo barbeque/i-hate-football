@@ -10,6 +10,7 @@ local STATE_DRAG_PLAYER = 1
 local STATE_DRAG_DIR = 2
 
 local background
+local football_image
 local players = {}
 
 local mouse_state = STATE_NONE
@@ -17,10 +18,28 @@ local cur_player = nil
 -- 1 or 2
 local cur_team = 1
 
+function distance(x1, y1, x2, y2)
+	return math.sqrt((x1-x2)^2 + (y1-y2)^2)
+end
+
+function normalize(x, y)
+	local d = math.sqrt(x^2 + y^2)
+	if d < 1e-6 then
+		return 1,0
+	else
+		return x/d, y/d
+	end
+end
+
+function round(x)
+	return math.floor(x+0.5)
+end
+
 function love.load()
 	love.graphics.setCaption("I HATE FOOTBALL")
 
 	background = love.graphics.newImage("background.png")
+	football_image = love.graphics.newImage("football.png")
 end
 
 function love.update(dt)
@@ -77,10 +96,14 @@ function draw_player(player)
 	-- draw the point the player runs towards
 	love.graphics.setColor(255,255,255)
 	love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
-end
 
-function distance(x1, y1, x2, y2)
-	return math.sqrt((x1-x2)^2 + (y1-y2)^2)
+	-- draw FOOTBALL
+	if player.has_football then
+		local nx, ny = normalize(player.dx, player.dy)
+		local fbx = round(player.x + nx*PLAYER_RADIUS - football_image:getWidth()*0.5)
+		local fby = round(player.y + ny*PLAYER_RADIUS - football_image:getHeight()*0.5)
+		love.graphics.draw(football_image, fbx, fby)
+	end
 end
 
 function hit_test(x, y, team)
@@ -142,8 +165,12 @@ function place_new_player(x,y)
 		y=y,
 		dx=0,
 		dy=0,
-		team=cur_team
+		team=cur_team,
+		has_football=false
 	}
+	if not player_with_football() and cur_team == 1 then
+		cur_player.has_football = true
+	end
 	table.insert(players, cur_player)
 	mouse_state = STATE_DRAG_DIR
 end
@@ -167,6 +194,16 @@ function players_on_team(team)
 	end
 	return count
 end
+
+function player_with_football()
+	for n, player in ipairs(players) do
+		if player.has_football then
+			return player
+		end
+	end
+	return nil
+end
+
 
 function love.mousereleased(x, y, button)
 	if button == "l" then
