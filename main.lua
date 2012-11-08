@@ -103,16 +103,8 @@ function love.mousepressed(x, y, button)
 			else
 				state = STATE_DRAG_PLAYER
 			end
-		elseif x < (1280/2 -PLAYER_RADIUS) and players_on_team(cur_team) < PLAYERS_PER_TEAM then
-			cur_player = {
-				x=x,
-				y=y,
-				dx=0,
-				dy=0,
-				team=cur_team
-			}
-			table.insert(players, cur_player)
-			state = STATE_DRAG_DIR
+		else
+			place_new_player(x,y)
 		end
 	elseif button == "r" then
 		local over_player, hit_dir_handle = hit_test(x,y,cur_team)
