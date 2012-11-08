@@ -61,9 +61,11 @@ function love.update(dt)
 			if length > 0 then
 				player_speed = 500
 
+				-- figure out how much they move this frame
 				x_distance = (player.dx / length) * (player_speed * dt)
 				y_distance = (player.dy / length) * (player_speed * dt)
 
+				-- apply it! hooray!!!
 				player.x = player.x + x_distance
 				player.y = player.y + y_distance
 				player.dx = player.dx - x_distance
@@ -72,8 +74,9 @@ function love.update(dt)
 		end
 
 		-- when the timer runs out we're done
-		turn_time_remaining = turn_time_remaining - t
+		turn_time_remaining = turn_time_remaining - dt
 		if turn_time_remaining <= 0 then
+			print("Stop running!!!!")
 			stop_running()
 		end
 	else
