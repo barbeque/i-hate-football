@@ -43,6 +43,16 @@ function round(x)
 	return math.floor(x+0.5)
 end
 
+function clamp(x, a, b)
+	if x < a then
+		return a
+	elseif x > b then
+		return b
+	else
+		return x
+	end
+end
+
 function love.load()
 	love.graphics.setCaption("I HATE FOOTBALL")
 
@@ -56,21 +66,10 @@ function love.update(dt)
 	if game_state == GSTATE_RUNNING then
 		-- move each player towards their "goal"
 		for n, player in ipairs(players) do
-			-- normalize dx, dy
-			length = math.sqrt(player.dx * player.dx + player.dy * player.dy)
-			if length > 5.0 then
-				player_speed = 500
-
-				-- figure out how much they move this frame
-				x_distance = (player.dx / length) * (player_speed * dt)
-				y_distance = (player.dy / length) * (player_speed * dt)
-
-				-- apply it! hooray!!!
-				player.x = player.x + x_distance
-				player.y = player.y + y_distance
-				player.dx = player.dx - x_distance
-				player.dy = player.dy - y_distance
-			end
+			nx, ny = normalize(player.dx, player.dy)
+			player_speed = 500
+			player.x = player.x + nx * player_speed * dt
+			player.y = player.y + ny * player_speed * dt
 		end
 
 		-- when the timer runs out we're done
@@ -79,16 +78,9 @@ function love.update(dt)
 			stop_running()
 		end
 	else
-		local x, y = love.mouse.getPosition()	
+		local x, y = love.mouse.getPosition()
 		if mouse_state == STATE_DRAG_PLAYER then
-			-- don't allow dragging into the other team's half of the field
-			if cur_team == 1  then
-				x = math.min(x, 1280/2 - PLAYER_RADIUS)
-			else -- 2
-				x = math.max(x, 1280/2 + PLAYER_RADIUS)
-			end
-			cur_player.x = x
-			cur_player.y = y
+			cur_player.x, cur_player.y = restrict_to_team_area(x, y, cur_player.team)
 		elseif mouse_state == STATE_DRAG_DIR then
 			cur_player.dx = x - cur_player.x
 			cur_player.dy = y - cur_player.y
@@ -211,14 +203,28 @@ function love.mousepressed(x, y, button)
 	end
 end
 
+function restrict_to_team_area(x,y,team)
+	local minX,minY,maxX,maxY
+	minY = PLAYER_RADIUS
+	maxY = 720 - PLAYER_RADIUS
+	if team == 1 then
+		minX = PLAYER_RADIUS
+		maxX = 1280*0.5 - PLAYER_RADIUS
+	else
+		minX = 1280*0.5 + PLAYER_RADIUS
+		maxX = 1280 - PLAYER_RADIUS
+	end
+	return clamp(x, minX, maxX), clamp(y, minY, maxY)
+end
+
 function place_new_player(x,y)
 	if players_on_team(cur_team) >= PLAYERS_PER_TEAM then
 		return
 	end
-	if cur_team == 1 and x > (1280/2 - PLAYER_RADIUS) then
+	if cur_team == 1 and x > (1280/2) then
 		return
 	end
-	if cur_team == 2 and x < (1280/2 + PLAYER_RADIUS) then
+	if cur_team == 2 and x < (1280/2) then
 		return
 	end
 	cur_player = {
@@ -229,6 +235,7 @@ function place_new_player(x,y)
 		team=cur_team,
 		has_football=false
 	}
+	cur_player.x, cur_player.y = restrict_to_team_area(cur_player.x, cur_player.y, cur_player.team)
 	if not player_with_football() and cur_team == 1 then
 		cur_player.has_football = true
 	end
