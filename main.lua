@@ -1,135 +1,134 @@
-local mapWidth, mapHeight
-local map
-local tilesDisplayWidth, tilesDisplayHeight
+local background
+local players = {}
 
-local tileSize = 32
-local mapX, mapY
-local zoomX, zoomY
+-- local TYPE_LINE = 0
+-- local TYPE_LINE_SEGMENT = 1
+-- local TYPE_CIRCLE = 2
+-- local TYPE_SPIRAL = 3
+-- local TYPE_BOX = 4
+-- local TYPE_SEEK_BALL = 5
+-- etc...
 
-local tileSetImage
-local tileQuads = {}
-local tileSetSprite
-local dudeBatch
-local tileSetBatch
+local STATE_NONE = 0
+local STATE_DRAG_PLAYER = 1
+local STATE_DRAG_DIR = 2
+
+local state = STATE_NONE
+local cur_player = nil
+
+local TEAM_COLORS = {[0]={0,0,255}, [1]={255,0,0}}
+local PLAYER_RADIUS = 16
 
 function love.load()
 	love.graphics.setCaption("I HATE FOOTBALL")
 
-	mapWidth = math.floor(love.graphics.getWidth() / tileSize + 0.5)
-	mapHeight = math.floor(love.graphics.getHeight() / tileSize + 0.5)
-
-	print('map width '.. mapWidth)
-	print('map height '.. mapHeight)
-
-	-- put random crap in the map
-	map = {}
-	for x = 1, mapWidth do
-		map[x] = {}
-		for y = 1, mapHeight do
-			map[x][y] = 0--math.random(0, 3)
-		end
-	end
-
-	-- set up the tile batch
-	mapX = 1
-	mapY = 1
-	tilesDisplayWidth = math.floor(love.graphics.getWidth() / tileSize + 0.5)
-	tilesDisplayHeight = math.floor(love.graphics.getHeight() / tileSize + 0.5)
-
-	zoomX = 1
-	zoomY = 1
-
-	tileSetImage = love.graphics.newImage("tileset.png")
-	tileSetImage:setFilter("nearest", "linear") -- linear filtering
-
-	-- grass
-	tileQuads[0] = love.graphics.newQuad(0 * tileSize, 20 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- kitchen floor tile
-	tileQuads[1] = love.graphics.newQuad(2 * tileSize, 0 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- parquet flooring
-	tileQuads[2] = love.graphics.newQuad(4 * tileSize, 0 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- middle of red carpet
-	tileQuads[3] = love.graphics.newQuad(3 * tileSize, 9 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-
-	-- top wall
-	tileQuads[4] = love.graphics.newQuad(10 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- down wall
-	tileQuads[5] = love.graphics.newQuad(10 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-
-	-- top left corner
-	-- top wall
-	tileQuads[6] = love.graphics.newQuad(8 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- top right corner
-	tileQuads[7] = love.graphics.newQuad(9 * tileSize, 1 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- bottom left corner
-	tileQuads[8] = love.graphics.newQuad(8 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- bottom right corner
-	tileQuads[9] = love.graphics.newQuad(9 * tileSize, 2 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-
-	-- wall front
-	tileQuads[10] = love.graphics.newQuad(8 * tileSize, 0 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-
-	-- man hair
-	tileQuads[11] = love.graphics.newQuad(14 * tileSize, 13 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-	-- man body
-	tileQuads[12] = love.graphics.newQuad(14 * tileSize, 14 * tileSize, tileSize, tileSize, tileSetImage:getWidth(), tileSetImage:getHeight())
-
-	for x = 1, mapWidth do
-		map[x][1] = 4
-		map[x][mapHeight] = 4
-	end
-
-	for y = 1, mapHeight do
-		map[1][y] = 5
-		map[mapWidth][y] = 5
-	end
-
-	map[1][1] = 6
-	map[mapWidth][1] = 7
-	map[1][mapHeight] = 8
-	map[mapWidth][mapHeight] = 9
-
-	for x = 2, mapWidth - 1 do
-		map[x][2] = 10
-	end
-
-	tileSetBatch = love.graphics.newSpriteBatch(tileSetImage, tilesDisplayHeight * tilesDisplayWidth)
-	updateVisibleBatch()
-
-	dudeBatch = love.graphics.newSpriteBatch(tileSetImage, 2)
-	dudeBatch:addq(tileQuads[11], 0, 0)
-	dudeBatch:addq(tileQuads[12], 0, tileSize)
+	background = love.graphics.newImage("background.png")
 end
 
-function updateVisibleBatch()
-	tileSetBatch:clear()
-	for x = 0, tilesDisplayWidth - 1 do
-		for y = 0, tilesDisplayHeight - 1 do
-			q = tileQuads[map[mapX + x][mapY + y]]
-			tileSetBatch:addq(q, x * tileSize, y * tileSize)
-		end
-	end
-end
-
-function scrollMap(dx, dy)
-	oldMapX = mapX
-	oldMapY = mapY
-	mapX = math.max(math.min(mapX + dx, mapWidth - tilesDisplayWidth), 1)
-	mapY = math.max(math.min(mapY + dy, mapHeight - tilesDisplayHeight), 1)
-
-	-- only update if we moved
-	if math.floor(mapX) ~= math.floor(oldMapX) or math.floor(mapY) ~= math.floor(oldMapY) then
-		updateVisibleBatch()
+function love.update(dt)
+	local x, y = love.mouse.getPosition()	
+	if state == STATE_DRAG_PLAYER then
+		cur_player.x = x
+		cur_player.y = y
+	elseif state == STATE_DRAG_DIR then
+		cur_player.dx = x - cur_player.x
+		cur_player.dy = y - cur_player.y
 	end
 end
 
 function love.draw()
-	xPos = math.floor(-zoomX * (mapX % 1) * tileSize)
-	yPos = math.floor(-zoomY * (mapY % 1) * tileSize)
-	love.graphics.draw(tileSetBatch, xPos, yPos)
+	love.graphics.draw(background, 0, 0)
 
-	-- draw the fat chinese computer science student on the field
-	love.graphics.draw(dudeBatch, 80, 200)
+	for n, player in ipairs(players) do
+		draw_player(player)
+	end
 
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
+end
+
+function draw_player(player)
+	-- draw direction line
+	love.graphics.setColor(255,255,255)
+	love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
+
+	-- draw player circle fill
+	love.graphics.setColor(unpack(TEAM_COLORS[player.team]))
+	love.graphics.circle("fill", player.x, player.y, PLAYER_RADIUS)
+
+	-- draw circle outline
+	love.graphics.setLineWidth(2)
+	love.graphics.setColor(255,255,255)
+	love.graphics.circle("line", player.x, player.y, PLAYER_RADIUS, 30)
+
+	-- draw the point the player runs towards
+	love.graphics.setColor(255,255,255)
+	love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
+end
+
+function distance(x1, y1, x2, y2)
+	return math.sqrt((x1-x2)^2 + (y1-y2)^2)
+end
+
+function hit_test(x, y)
+	for n, player in ipairs(players) do
+		local d = distance(player.x, player.y, x, y)
+		if d < PLAYER_RADIUS then
+			return player, false
+		end
+
+		d = distance(player.x+player.dx, player.y+player.dy, x, y)
+		if d < PLAYER_RADIUS*0.5 then
+			return player, true
+		end
+	end
+end
+
+function love.mousepressed(x, y, button)
+	if state ~= STATE_NONE then
+		return
+	end
+
+	if button == "l" then
+		local over_player, drag_dir = hit_test(x,y)
+		if over_player ~= nil then
+			cur_player = over_player
+			if drag_dir then
+				state = STATE_DRAG_DIR
+			else
+				state = STATE_DRAG_PLAYER
+			end
+		elseif x < (1280/2 -PLAYER_RADIUS) then
+			cur_player = {
+				x=x,
+				y=y,
+				dx=0,
+				dy=0,
+				team=0
+			}
+			table.insert(players, cur_player)
+			state = STATE_DRAG_DIR
+		end
+	elseif button == "r" then
+		local over_player, is_dir = hit_test(x,y)
+		if not is_dir and over_player ~= nil then
+			remove_player(over_player)
+		end
+	end
+end
+
+function remove_player(p)
+	for n, player in ipairs(players) do 
+		if player == p then
+			print ("Removing player "..n)
+			table.remove(players, n)
+			return
+		end
+	end
+end
+
+function love.mousereleased(x, y, button)
+	if button == "l" then
+		cur_player = nil
+		state = STATE_NONE
+	end
 end
