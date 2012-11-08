@@ -57,6 +57,7 @@ function love.draw()
 	end
 	love.graphics.print(team_1_prefix..TEAM_NAMES[1] .. ": "..players_on_team(1).."/"..PLAYERS_PER_TEAM, 10, 10+12*1)
 	love.graphics.print(team_2_prefix..TEAM_NAMES[2] .. ": "..players_on_team(2).."/"..PLAYERS_PER_TEAM, 10, 10+12*2)
+	love.graphics.print("T to swap teams", 10, 10+12*3)
 end
 
 function draw_player(player)
