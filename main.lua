@@ -235,11 +235,13 @@ end
 
 function love.keypressed(key, unicode)
 	-- switch teams when "T" is pressed
-	if mouse_state == STATE_NONE and key == "t" then
-		if cur_team == 1 then
-			cur_team = 2
-		else
-			cur_team = 1
+	if mouse_state == STATE_NONE then
+		if key == "t" then
+			if cur_team == 1 then
+				cur_team = 2
+			else
+				cur_team = 1
+			end
 		end
 	end
 
