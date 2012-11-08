@@ -184,4 +184,8 @@ function love.keypressed(key, unicode)
 			cur_team = 1
 		end
 	end
+
+	if key == "escape" then
+		love.event.quit()
+	end
 end
