@@ -73,6 +73,8 @@ function love.draw()
 	end
 
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
+
+	-- tell us whose turn it is
 	local team_1_prefix = "      "
 	local team_2_prefix = team_1_prefix
 	if cur_team == 1 then
@@ -84,6 +86,7 @@ function love.draw()
 	love.graphics.print(team_2_prefix..TEAM_NAMES[2] .. ": "..players_on_team(2).."/"..PLAYERS_PER_TEAM, 10, 10+12*2)
 	love.graphics.print("T to swap teams", 10, 10+12*3)
 
+	-- tell us what game state we're in
 	hudText = "";
 	if game_state == GSTATE_PLACEMENT then
 		hudText = "Placing players..."
