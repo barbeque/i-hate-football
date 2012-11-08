@@ -21,6 +21,7 @@ local players = {}
 local game_state = GSTATE_PLACEMENT
 local mouse_state = STATE_NONE
 local cur_player = nil
+local t = 0
 -- 1 or 2
 local cur_team = 1
 
@@ -49,6 +50,7 @@ function love.load()
 end
 
 function love.update(dt)
+	t = t + dt
 	local x, y = love.mouse.getPosition()	
 	if mouse_state == STATE_DRAG_PLAYER then
 		-- don't allow dragging into the other team's half of the field
@@ -66,7 +68,16 @@ function love.update(dt)
 end
 
 function love.draw()
-	love.graphics.draw(background, 0, 0)
+	offsetX, offsetY = 0
+	if game_state == GSTATE_RUNNING then
+		-- vibrate that bitch but just softly
+		alpha = 1.6
+		beta = 0.7
+		offsetX = 2 * math.sin(3 * t + alpha)
+		offsetY = 1.2 * math.cos(4.1 * t + beta)
+	end
+
+	love.graphics.draw(background, offsetX, offsetY)
 
 	for n, player in ipairs(players) do
 		draw_player(player)
@@ -242,6 +253,9 @@ function love.keypressed(key, unicode)
 			else
 				cur_team = 1
 			end
+		elseif key == "e" then
+			-- eventually we'll do some real logic here. for now put the state in running
+			game_state = GSTATE_RUNNING
 		end
 	end
 
