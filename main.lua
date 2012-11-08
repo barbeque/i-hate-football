@@ -52,7 +52,6 @@ end
 
 function love.update(dt)
 	t = t + dt
-	print(dt)
 
 	if game_state == GSTATE_RUNNING then
 		-- move each player towards their "goal"
