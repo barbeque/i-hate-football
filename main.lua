@@ -32,6 +32,11 @@ end
 function love.update(dt)
 	local x, y = love.mouse.getPosition()	
 	if state == STATE_DRAG_PLAYER then
+		if cur_team == 0  then
+			x = math.min(x, 1280/2 - PLAYER_RADIUS)
+		else
+			x = math.max(x, 1280/2 + PLAYER_RADIUS)
+		end
 		cur_player.x = x
 		cur_player.y = y
 	elseif state == STATE_DRAG_DIR then
