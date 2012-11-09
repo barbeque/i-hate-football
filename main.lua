@@ -12,6 +12,15 @@ local TEAM_RED = {
 local PLAYER_RADIUS = 16
 local PLAYERS_PER_TEAM = 5
 local PLAYER_SPEED = 500
+-- whether players keep running in original direction (true) or run to the point
+-- specified by player.{x,y} + player.{dx,dy}
+local PLAYER_RUN_FOREVER = true
+local PLAYER_BOUNCE = true
+
+local FIELD_W = 1280
+local FIELD_H = 720
+
+local TURN_TIME = 30 --0.25
 
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
@@ -23,10 +32,6 @@ local STATE_NONE = 0
 local STATE_DRAG_PLAYER = 1
 local STATE_DRAG_DIR = 2
 
--- whether players keep running in original direction (true) or run to the point
--- specified by player.{x,y} + player.{dx,dy}
-local RUN_FOREVER = false
-
 local background
 local football_image
 local players = {}
@@ -37,6 +42,12 @@ local cur_player = nil
 local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
+
+if 1 then
+	PLAYER_RUN_FOREVER = false
+	PLAYER_BOUNCE = false
+	TURN_TIME = 0.25
+end
 
 function length(x,y)
 	return math.sqrt(x*x + y*y)
@@ -98,15 +109,41 @@ function love.update(dt)
 			if dist_left > 0.001 then
 				local travel = math.min(PLAYER_SPEED * dt, dist_left)
 				local nx, ny = normalize(player.dx, player.dy)
+
 				player.x = player.x + nx * travel
 				player.y = player.y + ny * travel
-				if not RUN_FOREVER then
+
+				if not PLAYER_RUN_FOREVER then
 					if travel == dist_left then
 						player.dx = 0
 						player.dy = 0
 					else
 						player.dx = player.dx - nx * travel
 						player.dy = player.dy - ny * travel
+					end
+				end
+
+				if player.x < PLAYER_RADIUS then
+					player.x = PLAYER_RADIUS
+					if PLAYER_BOUNCE then
+						player.dx = math.abs(player.dx)
+					end
+				elseif player.x > FIELD_W-PLAYER_RADIUS then
+					player.x = FIELD_W-PLAYER_RADIUS
+					if PLAYER_BOUNCE then
+						player.dx = -math.abs(player.dx)
+					end
+				end
+
+				if player.y < PLAYER_RADIUS then
+					player.y = PLAYER_RADIUS
+					if PLAYER_BOUNCE then
+						player.dy = math.abs(player.dy)
+					end
+				elseif player.y > FIELD_H-PLAYER_RADIUS then
+					player.y = FIELD_H-PLAYER_RADIUS
+					if PLAYER_BOUNCE then
+						player.dy = -math.abs(player.dy)
 					end
 				end
 			end
@@ -246,13 +283,13 @@ end
 function restrict_to_team_area(x,y,team)
 	local minX,minY,maxX,maxY
 	minY = PLAYER_RADIUS
-	maxY = 720 - PLAYER_RADIUS
+	maxY = FIELD_H - PLAYER_RADIUS
 	if team == TEAM_BLUE then
 		minX = PLAYER_RADIUS
-		maxX = 1280*0.5 - PLAYER_RADIUS
+		maxX = FIELD_W*0.5 - PLAYER_RADIUS
 	else -- TEAM_RED
-		minX = 1280*0.5 + PLAYER_RADIUS
-		maxX = 1280 - PLAYER_RADIUS
+		minX = FIELD_W*0.5 + PLAYER_RADIUS
+		maxX = FIELD_W - PLAYER_RADIUS
 	end
 	return clamp(x, minX, maxX), clamp(y, minY, maxY)
 end
@@ -261,10 +298,10 @@ function place_new_player(x,y)
 	if players_on_team(cur_team) >= PLAYERS_PER_TEAM then
 		return
 	end
-	if cur_team == TEAM_BLUE and x > (1280/2) then
+	if cur_team == TEAM_BLUE and x > (FIELD_W/2) then
 		return
 	end
-	if cur_team == TEAM_RED and x < (1280/2) then
+	if cur_team == TEAM_RED and x < (FIELD_W/2) then
 		return
 	end
 	cur_player = {
@@ -276,7 +313,7 @@ function place_new_player(x,y)
 		has_football=false
 	}
 	cur_player.x, cur_player.y = restrict_to_team_area(cur_player.x, cur_player.y, cur_player.team)
-	if not player_with_football() and cur_team == 1 then
+	if not player_with_football() and cur_team == TEAM_BLUE then
 		cur_player.has_football = true
 	end
 	table.insert(players, cur_player)
@@ -314,7 +351,7 @@ end
 
 function start_running_turn()
 	game_state = GSTATE_RUNNING
-	turn_time_remaining = .25 -- i dunno, that seems fair
+	turn_time_remaining = TURN_TIME -- i dunno, that seems fair
 end
 
 function stop_running()
