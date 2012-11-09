@@ -394,6 +394,7 @@ function player_player_collide(p1, p2)
 		p1.y = p1.y - noy * displacement
 		p2.x = p2.x + nox * displacement
 		p2.y = p2.y + noy * displacement
+		-- TODO: This doesn't account for dx/dy when in "run to spot" mode (RUN_FOREVER=0)
 	end
 end
 
@@ -401,14 +402,14 @@ function player_player_collisions()
 	-- loop through all player-player combinations
 	-- this is N^2 but we at least try to be smart about it
 	-- ( it is precisely N(N+1)/2 )
-	local t0 = love.timer.getMicroTime()
+	-- local t0 = love.timer.getMicroTime()
 	for n = 1, #players do
 		for m = 1, n - 1 do
 			player_player_collide(players[n], players[m])
 		end
 	end
-	local t1 = love.timer.getMicroTime()
-	print((t1-t0)*1000)
+	-- local t1 = love.timer.getMicroTime()
+	-- print((t1-t0)*1000)
 end
 
 function start_running_turn()
