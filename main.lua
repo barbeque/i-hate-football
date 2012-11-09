@@ -1,12 +1,16 @@
 
-local TEAM_NAMES = {"BLUE", "RED"}
-local TEAM_COLORS = {{0,0,255}, {255,0,0}}
+-- teams
+local TEAM_BLUE = {
+	name="BLUE",
+	color={0,0,255}
+}
+local TEAM_RED = {
+	name="RED",
+	color={255,0,0}
+}
+
 local PLAYER_RADIUS = 16
 local PLAYERS_PER_TEAM = 5
-
--- teams
-local TEAM_BLUE = 1
-local TEAM_RED = 2
 
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
@@ -117,8 +121,8 @@ function love.draw()
 	else
 		team_r_prefix = "--> "
 	end
-	love.graphics.print(string.format("%s%s: %d/%d", team_b_prefix, TEAM_NAMES[TEAM_BLUE], players_on_team(TEAM_BLUE), PLAYERS_PER_TEAM), 10, 10+12*1)
-	love.graphics.print(string.format("%s%s: %d/%d", team_r_prefix, TEAM_NAMES[TEAM_RED], players_on_team(TEAM_RED), PLAYERS_PER_TEAM), 10, 10+12*2)
+	love.graphics.print(string.format("%s%s: %d/%d", team_b_prefix, TEAM_BLUE.name, players_on_team(TEAM_BLUE), PLAYERS_PER_TEAM), 10, 10+12*1)
+	love.graphics.print(string.format("%s%s: %d/%d", team_r_prefix, TEAM_RED.name, players_on_team(TEAM_RED), PLAYERS_PER_TEAM), 10, 10+12*2)
 	love.graphics.print("T to swap teams", 10, 10+12*3)
 
 	-- tell us what game state we're in
@@ -141,7 +145,7 @@ function draw_player(player)
 	love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
 
 	-- draw player circle fill
-	love.graphics.setColor(unpack(TEAM_COLORS[player.team]))
+	love.graphics.setColor(unpack(player.team.color))
 	love.graphics.circle("fill", player.x, player.y, PLAYER_RADIUS)
 
 	-- draw circle outline
@@ -224,10 +228,10 @@ function place_new_player(x,y)
 	if players_on_team(cur_team) >= PLAYERS_PER_TEAM then
 		return
 	end
-	if cur_team == 1 and x > (1280/2) then
+	if cur_team == TEAM_BLUE and x > (1280/2) then
 		return
 	end
-	if cur_team == 2 and x < (1280/2) then
+	if cur_team == TEAM_RED and x < (1280/2) then
 		return
 	end
 	cur_player = {
