@@ -2,11 +2,13 @@
 -- teams
 local TEAM_BLUE = {
 	name="BLUE",
-	color={0,0,255}
+	color={0,0,255},
+	score=0
 }
 local TEAM_RED = {
 	name="RED",
-	color={255,0,0}
+	color={255,0,0},
+	score=0
 }
 
 local PLAYER_RADIUS = 16
@@ -34,6 +36,8 @@ local STATE_DRAG_DIR = 2
 
 local background
 local football_image
+local small_font
+local score_font
 local players = {}
 
 local game_state = GSTATE_PLACEMENT
@@ -43,7 +47,7 @@ local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
 
-if 1 then
+if true then
 	PLAYER_RUN_FOREVER = false
 	PLAYER_BOUNCE = false
 	TURN_TIME = 0.25
@@ -97,6 +101,8 @@ end
 function love.load()
 	background = love.graphics.newImage("background.png")
 	football_image = love.graphics.newImage("football.png")
+	small_font = love.graphics.newFont(12)
+	score_font = love.graphics.newFont(48)
 end
 
 function love.update(dt)
@@ -166,21 +172,31 @@ function love.update(dt)
 end
 
 function love.draw()
-	offsetX, offsetY = 0
-	if game_state == GSTATE_RUNNING then
-		-- vibrate that bitch but just softly
-		alpha = 1.6
-		beta = 0.7
-		offsetX = 6 * math.sin(15 * t + alpha)
-		offsetY = 2.5 * math.cos(41.1 * t + beta)
-	end
-
-	love.graphics.draw(background, offsetX, offsetY)
+	draw_bg()
 
 	for n, player in ipairs(players) do
 		draw_player(player)
 	end
 
+	draw_scores()
+	draw_hud()
+end
+
+function draw_bg()
+	local offsetX, offsetY = 0
+	if game_state == GSTATE_RUNNING then
+		-- vibrate that bitch but just softly
+		local alpha = 1.6
+		local beta = 0.7
+		offsetX = 6 * math.sin(15 * t + alpha)
+		offsetY = 2.5 * math.cos(41.1 * t + beta)
+	end
+
+	love.graphics.draw(background, offsetX, offsetY)
+end
+
+function draw_hud()
+	love.graphics.setFont(small_font)
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
 
 	-- tell us whose turn it is
@@ -196,7 +212,7 @@ function love.draw()
 	love.graphics.print("T to swap teams", 10, 10+12*3)
 
 	-- tell us what game state we're in
-	hudText = "";
+	local hudText = "";
 	if game_state == GSTATE_PLACEMENT then
 		hudText = "Placing players..."
 	elseif game_state == GSTATE_COACHING then
@@ -209,10 +225,25 @@ function love.draw()
 	love.graphics.print(hudText, 10, 10 + 12 * 4)
 end
 
-function draw_player(player)
-	-- draw direction line
+function draw_single_score(val, x,y)
+	love.graphics.setFont(score_font)
+	love.graphics.setColor(0,0,0)
+	love.graphics.print(val, x, y+2)
 	love.graphics.setColor(255,255,255)
-	love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
+	love.graphics.print(val, x, y)
+end
+
+function draw_scores()
+	draw_single_score(TEAM_BLUE.score, 10, 720-60)
+	draw_single_score(TEAM_RED.score, 1280-75, 720-60)
+end
+
+function draw_player(player)
+	if game_state ~= GSTATE_RUNNING then
+		-- draw direction line
+		love.graphics.setColor(255,255,255)
+		love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
+	end
 
 	-- draw player circle fill
 	love.graphics.setColor(unpack(player.team.color))
@@ -223,9 +254,11 @@ function draw_player(player)
 	love.graphics.setColor(255,255,255)
 	love.graphics.circle("line", player.x, player.y, PLAYER_RADIUS, 30)
 
-	-- draw the point the player runs towards
-	love.graphics.setColor(255,255,255)
-	love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
+	if game_state ~= GSTATE_RUNNING then
+		-- draw the point the player runs towards
+		love.graphics.setColor(255,255,255)
+		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
+	end
 
 	-- draw FOOTBALL
 	if player.has_football then
