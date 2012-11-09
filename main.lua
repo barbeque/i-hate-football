@@ -155,6 +155,8 @@ function love.update(dt)
 			end
 		end
 
+		player_player_collisions()
+
 		-- when the timer runs out we're done
 		turn_time_remaining = turn_time_remaining - dt
 		if turn_time_remaining <= 0 then
@@ -380,6 +382,33 @@ function player_with_football()
 		end
 	end
 	return nil
+end
+
+function player_player_collide(p1, p2)
+	local d = distance(p1.x, p1.y, p2.x, p2.y)
+	if d < PLAYER_RADIUS*2 then
+		local ox, oy = p2.x-p1.x, p2.y-p1.y
+		local nox, noy = normalize(ox, oy)
+		local displacement = (PLAYER_RADIUS*2 - d) * 0.5
+		p1.x = p1.x - nox * displacement
+		p1.y = p1.y - noy * displacement
+		p2.x = p2.x + nox * displacement
+		p2.y = p2.y + noy * displacement
+	end
+end
+
+function player_player_collisions()
+	-- loop through all player-player combinations
+	-- this is N^2 but we at least try to be smart about it
+	-- ( it is precisely N(N+1)/2 )
+	local t0 = love.timer.getMicroTime()
+	for n = 1, #players do
+		for m = 1, n - 1 do
+			player_player_collide(players[n], players[m])
+		end
+	end
+	local t1 = love.timer.getMicroTime()
+	print((t1-t0)*1000)
 end
 
 function start_running_turn()
