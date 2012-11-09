@@ -11,6 +11,7 @@ local TEAM_RED = {
 
 local PLAYER_RADIUS = 16
 local PLAYERS_PER_TEAM = 5
+local PLAYER_SPEED = 500
 
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
@@ -22,6 +23,10 @@ local STATE_NONE = 0
 local STATE_DRAG_PLAYER = 1
 local STATE_DRAG_DIR = 2
 
+-- whether players keep running in original direction (true) or run to the point
+-- specified by player.{x,y} + player.{dx,dy}
+local RUN_FOREVER = false
+
 local background
 local football_image
 local players = {}
@@ -32,6 +37,10 @@ local cur_player = nil
 local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
+
+function length(x,y)
+	return math.sqrt(x*x + y*y)
+end
 
 function distance(x1, y1, x2, y2)
 	return math.sqrt((x1-x2)^2 + (y1-y2)^2)
@@ -60,9 +69,21 @@ function clamp(x, a, b)
 	end
 end
 
-function love.load()
-	love.graphics.setCaption("I HATE FOOTBALL")
+function seek(curr, target, step)
+	if curr < target then
+		curr = curr + step
+		-- clamp to avoid overshoot
+		return math.min(curr, target)
+	elseif curr > target then
+		curr = curr - step
+		-- clamp to avoid undershoot
+		return math.max(curr, target)
+	else
+		return curr
+	end
+end
 
+function love.load()
 	background = love.graphics.newImage("background.png")
 	football_image = love.graphics.newImage("football.png")
 end
@@ -73,10 +94,22 @@ function love.update(dt)
 	if game_state == GSTATE_RUNNING then
 		-- move each player towards their "goal"
 		for n, player in ipairs(players) do
-			nx, ny = normalize(player.dx, player.dy)
-			player_speed = 500
-			player.x = player.x + nx * player_speed * dt
-			player.y = player.y + ny * player_speed * dt
+			local dist_left = length(player.dx, player.dy)
+			if dist_left > 0.001 then
+				local travel = math.min(PLAYER_SPEED * dt, dist_left)
+				local nx, ny = normalize(player.dx, player.dy)
+				player.x = player.x + nx * travel
+				player.y = player.y + ny * travel
+				if not RUN_FOREVER then
+					if travel == dist_left then
+						player.dx = 0
+						player.dy = 0
+					else
+						player.dx = player.dx - nx * travel
+						player.dy = player.dy - ny * travel
+					end
+				end
+			end
 		end
 
 		-- when the timer runs out we're done
