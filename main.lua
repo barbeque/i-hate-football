@@ -4,6 +4,10 @@ local TEAM_COLORS = {{0,0,255}, {255,0,0}}
 local PLAYER_RADIUS = 16
 local PLAYERS_PER_TEAM = 5
 
+-- teams
+local TEAM_BLUE = 1
+local TEAM_RED = 2
+
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
 local GSTATE_COACHING = 1 -- pointing them in a direction, molesting them a little
@@ -23,8 +27,7 @@ local mouse_state = STATE_NONE
 local cur_player = nil
 local t = 0
 local turn_time_remaining = 0
--- 1 or 2
-local cur_team = 1
+local cur_team = TEAM_BLUE
 
 function distance(x1, y1, x2, y2)
 	return math.sqrt((x1-x2)^2 + (y1-y2)^2)
@@ -107,15 +110,15 @@ function love.draw()
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
 
 	-- tell us whose turn it is
-	local team_1_prefix = "      "
-	local team_2_prefix = team_1_prefix
-	if cur_team == 1 then
-		team_1_prefix = "--> "
+	local team_r_prefix = "      "
+	local team_b_prefix = team_r_prefix
+	if cur_team == TEAM_BLUE then
+		team_b_prefix = "--> "
 	else
-		team_2_prefix = "--> "
+		team_r_prefix = "--> "
 	end
-	love.graphics.print(team_1_prefix..TEAM_NAMES[1] .. ": "..players_on_team(1).."/"..PLAYERS_PER_TEAM, 10, 10+12*1)
-	love.graphics.print(team_2_prefix..TEAM_NAMES[2] .. ": "..players_on_team(2).."/"..PLAYERS_PER_TEAM, 10, 10+12*2)
+	love.graphics.print(string.format("%s%s: %d/%d", team_b_prefix, TEAM_NAMES[TEAM_BLUE], players_on_team(TEAM_BLUE), PLAYERS_PER_TEAM), 10, 10+12*1)
+	love.graphics.print(string.format("%s%s: %d/%d", team_r_prefix, TEAM_NAMES[TEAM_RED], players_on_team(TEAM_RED), PLAYERS_PER_TEAM), 10, 10+12*2)
 	love.graphics.print("T to swap teams", 10, 10+12*3)
 
 	-- tell us what game state we're in
@@ -207,10 +210,10 @@ function restrict_to_team_area(x,y,team)
 	local minX,minY,maxX,maxY
 	minY = PLAYER_RADIUS
 	maxY = 720 - PLAYER_RADIUS
-	if team == 1 then
+	if team == TEAM_BLUE then
 		minX = PLAYER_RADIUS
 		maxX = 1280*0.5 - PLAYER_RADIUS
-	else
+	else -- TEAM_RED
 		minX = 1280*0.5 + PLAYER_RADIUS
 		maxX = 1280 - PLAYER_RADIUS
 	end
@@ -292,10 +295,10 @@ function love.keypressed(key, unicode)
 	-- switch teams when "T" is pressed
 	if mouse_state == STATE_NONE then
 		if key == "t" then
-			if cur_team == 1 then
-				cur_team = 2
+			if cur_team == TEAM_BLUE then
+				cur_team = TEAM_RED
 			else
-				cur_team = 1
+				cur_team = TEAM_BLUE
 			end
 		elseif key == "e" then
 			-- eventually we'll do some real logic here. for now put the state in running
