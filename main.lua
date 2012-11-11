@@ -11,13 +11,16 @@ local TEAM_RED = {
 	score=0
 }
 
-local PLAYER_RADIUS = 16
+local PLAYER_COLLIDE_RADIUS = 12
 local PLAYERS_PER_TEAM = 5
 local PLAYER_SPEED = 500
 -- whether players keep running in original direction (true) or run to the point
 -- specified by player.{x,y} + player.{dx,dy}
 local PLAYER_RUN_FOREVER = true
 local PLAYER_BOUNCE = true
+
+local TARGET_DRAW_RADIUS = 4
+local TARGET_HIT_RADIUS = 8
 
 local FIELD_W = 1280
 local FIELD_H = 720
@@ -45,6 +48,8 @@ local players = {}
 local game_state = GSTATE_PLACEMENT
 local mouse_state = STATE_NONE
 local cur_player = nil
+local drag_x_offset = 0
+local drag_y_offset = 0
 local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
@@ -100,6 +105,26 @@ function seek(curr, target, step)
 	end
 end
 
+local Rect = {}
+Rect.__index = Rect
+
+function Rect:new(x,y,w,h)
+	local r = {x=x,y=y,w=w,h=h}
+	setmetatable(r, Rect)
+	return r
+end
+
+function Rect:contains(x,y)
+	return ((x >= self.x) and
+			(x < self.x+self.h) and
+			(y >= self.y) and
+			(y < self.y+self.h))
+end
+
+function Rect:grow(n)
+	return Rect:new(self.x-n,self.y-n,self.w+n+n, self.h+n+n)
+end
+
 function love.load()
 	background = love.graphics.newImage("images/background.png")
 	football_image = love.graphics.newImage("images/football.png")
@@ -133,25 +158,25 @@ function love.update(dt)
 					end
 				end
 
-				if player.x < PLAYER_RADIUS then
-					player.x = PLAYER_RADIUS
+				if player.x < PLAYER_COLLIDE_RADIUS then
+					player.x = PLAYER_COLLIDE_RADIUS
 					if PLAYER_BOUNCE then
 						player.dx = math.abs(player.dx)
 					end
-				elseif player.x > FIELD_W-PLAYER_RADIUS then
-					player.x = FIELD_W-PLAYER_RADIUS
+				elseif player.x > FIELD_W-PLAYER_COLLIDE_RADIUS then
+					player.x = FIELD_W-PLAYER_COLLIDE_RADIUS
 					if PLAYER_BOUNCE then
 						player.dx = -math.abs(player.dx)
 					end
 				end
 
-				if player.y < PLAYER_RADIUS then
-					player.y = PLAYER_RADIUS
+				if player.y < PLAYER_COLLIDE_RADIUS then
+					player.y = PLAYER_COLLIDE_RADIUS
 					if PLAYER_BOUNCE then
 						player.dy = math.abs(player.dy)
 					end
-				elseif player.y > FIELD_H-PLAYER_RADIUS then
-					player.y = FIELD_H-PLAYER_RADIUS
+				elseif player.y > FIELD_H-PLAYER_COLLIDE_RADIUS then
+					player.y = FIELD_H-PLAYER_COLLIDE_RADIUS
 					if PLAYER_BOUNCE then
 						player.dy = -math.abs(player.dy)
 					end
@@ -169,10 +194,12 @@ function love.update(dt)
 	else
 		local x, y = love.mouse.getPosition()
 		if mouse_state == STATE_DRAG_PLAYER then
-			cur_player.x, cur_player.y = restrict_to_team_area(x, y, cur_player.team)
+			cur_player.x, cur_player.y = restrict_to_team_area(x - drag_x_offset,
+																y - drag_y_offset,
+																cur_player.team)
 		elseif mouse_state == STATE_DRAG_DIR then
-			cur_player.dx = x - cur_player.x
-			cur_player.dy = y - cur_player.y
+			cur_player.dx = x - cur_player.x - drag_x_offset
+			cur_player.dy = y - cur_player.y - drag_y_offset
 		end
 	end
 end
@@ -270,9 +297,9 @@ function draw_player_ground_stuff(player)
 	end
 
 	-- -- draw circle outline
-	love.graphics.setLineWidth(1)
-	love.graphics.setColor(255,255,255)
-	love.graphics.circle("line", player.x, player.y, PLAYER_RADIUS, 30)
+	-- love.graphics.setLineWidth(1)
+	-- love.graphics.setColor(255,255,255)
+	-- love.graphics.circle("line", player.x, player.y, PLAYER_COLLIDE_RADIUS, 30)
 end
 
 function draw_player_sprite(player)
@@ -295,11 +322,11 @@ function draw_player_target(player)
 	if game_state ~= GSTATE_RUNNING then
 		-- draw the point the player runs towards
 		love.graphics.setColor(255,255,255)
-		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
+		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, TARGET_DRAW_RADIUS)
 
 		love.graphics.setColor(0,0,0)
 		love.graphics.setLineWidth(1)
-		love.graphics.circle("line", player.x + player.dx, player.y + player.dy, 4)
+		love.graphics.circle("line", player.x + player.dx, player.y + player.dy, TARGET_DRAW_RADIUS)
 	end
 end
 
@@ -308,18 +335,23 @@ function hit_test(x, y, team)
 		if player.team == team then
 			local d
 
+			-- target handle
 			d = distance(player.x+player.dx, player.y+player.dy, x, y)
-			if d < PLAYER_RADIUS*0.5 then
+			if d < TARGET_HIT_RADIUS then
 				return player, true
 			end
 
-			d = distance(player.x, player.y, x, y)
-			if d < PLAYER_RADIUS then
+			-- player itself
+			if get_player_hit_rect(player):contains(x,y) then
 				return player, false
 			end
 
 		end
 	end
+end
+
+function get_player_hit_rect(player)
+	return Rect:new(player.x - 20, player.y - 45, 40, 45):grow(5)
 end
 
 function love.mousepressed(x, y, button)
@@ -333,8 +365,12 @@ function love.mousepressed(x, y, button)
 			cur_player = over_player
 			if hit_dir_handle then
 				mouse_state = STATE_DRAG_DIR
+				drag_x_offset = x - (over_player.x+over_player.dx)
+				drag_y_offset = y - (over_player.y+over_player.dy)
 			else
 				mouse_state = STATE_DRAG_PLAYER
+				drag_x_offset = x - over_player.x
+				drag_y_offset = y - over_player.y
 			end
 		else
 			place_new_player(x,y)
@@ -349,14 +385,14 @@ end
 
 function restrict_to_team_area(x,y,team)
 	local minX,minY,maxX,maxY
-	minY = PLAYER_RADIUS
-	maxY = FIELD_H - PLAYER_RADIUS
+	minY = PLAYER_COLLIDE_RADIUS
+	maxY = FIELD_H - PLAYER_COLLIDE_RADIUS
 	if team == TEAM_BLUE then
-		minX = PLAYER_RADIUS
-		maxX = FIELD_W*0.5 - PLAYER_RADIUS
+		minX = PLAYER_COLLIDE_RADIUS
+		maxX = FIELD_W*0.5 - PLAYER_COLLIDE_RADIUS
 	else -- TEAM_RED
-		minX = FIELD_W*0.5 + PLAYER_RADIUS
-		maxX = FIELD_W - PLAYER_RADIUS
+		minX = FIELD_W*0.5 + PLAYER_COLLIDE_RADIUS
+		maxX = FIELD_W - PLAYER_COLLIDE_RADIUS
 	end
 	return clamp(x, minX, maxX), clamp(y, minY, maxY)
 end
@@ -390,7 +426,7 @@ end
 function remove_player(p)
 	for n, player in ipairs(players) do 
 		if player == p then
-			print ("Removing player "..n)
+			-- print ("Removing player "..n)
 			table.remove(players, n)
 			return
 		end
@@ -418,10 +454,10 @@ end
 
 function player_player_collide(p1, p2)
 	local d = distance(p1.x, p1.y, p2.x, p2.y)
-	if d < PLAYER_RADIUS*2 then
+	if d < PLAYER_COLLIDE_RADIUS*2 then
 		local ox, oy = p2.x-p1.x, p2.y-p1.y
 		local nox, noy = normalize(ox, oy)
-		local displacement = (PLAYER_RADIUS*2 - d) * 0.5
+		local displacement = (PLAYER_COLLIDE_RADIUS*2 - d) * 0.5
 		p1.x = p1.x - nox * displacement
 		p1.y = p1.y - noy * displacement
 		p2.x = p2.x + nox * displacement
