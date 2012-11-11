@@ -37,9 +37,9 @@ local GSTATE_COACHING = 1 -- pointing them in a direction, molesting them a litt
 local GSTATE_RUNNING = 2 -- the game is running. you can't do anything but cry
 
 -- mouse states
-local STATE_NONE = 0
-local STATE_DRAG_PLAYER = 1
-local STATE_DRAG_DIR = 2
+local MSTATE_NONE = 0
+local MSTATE_DRAG_PLAYER = 1
+local MSTATE_DRAG_DIR = 2
 
 -- are we running in SHILBERT MODE? (long turns, keep running in same direction forever)
 if love.filesystem.exists("hax.lua") then
@@ -65,7 +65,7 @@ local score_font
 local players = {}
 
 local game_state = GSTATE_PLACEMENT
-local mouse_state = STATE_NONE
+local mouse_state = MSTATE_NONE
 local cur_player = nil
 local drag_x_offset = 0
 local drag_y_offset = 0
@@ -144,11 +144,11 @@ function love.update(dt)
 		end
 	else
 		local x, y = love.mouse.getPosition()
-		if mouse_state == STATE_DRAG_PLAYER then
+		if mouse_state == MSTATE_DRAG_PLAYER then
 			cur_player.x, cur_player.y = restrict_to_team_area(x - drag_x_offset,
 																y - drag_y_offset,
 																cur_player.team)
-		elseif mouse_state == STATE_DRAG_DIR then
+		elseif mouse_state == MSTATE_DRAG_DIR then
 			cur_player.dx = x - cur_player.x - drag_x_offset
 			cur_player.dy = y - cur_player.y - drag_y_offset
 		end
@@ -306,7 +306,7 @@ function get_player_hit_rect(player)
 end
 
 function love.mousepressed(x, y, button)
-	if mouse_state ~= STATE_NONE then
+	if mouse_state ~= MSTATE_NONE then
 		return
 	end
 
@@ -315,12 +315,12 @@ function love.mousepressed(x, y, button)
 		if over_player ~= nil then
 			cur_player = over_player
 			if hit_dir_handle then
-				mouse_state = STATE_DRAG_DIR
+				mouse_state = MSTATE_DRAG_DIR
 				drag_x_offset = x - (over_player.x+over_player.dx)
 				drag_y_offset = y - (over_player.y+over_player.dy)
 			else
 				if game_state == GSTATE_PLACEMENT then
-					mouse_state = STATE_DRAG_PLAYER
+					mouse_state = MSTATE_DRAG_PLAYER
 					drag_x_offset = x - over_player.x
 					drag_y_offset = y - over_player.y
 				end
@@ -375,7 +375,7 @@ function place_new_player(x,y)
 		cur_player.has_football = true
 	end
 	table.insert(players, cur_player)
-	mouse_state = STATE_DRAG_DIR
+	mouse_state = MSTATE_DRAG_DIR
 	drag_x_offset = 0
 	drag_y_offset = 0
 end
@@ -449,13 +449,13 @@ end
 function love.mousereleased(x, y, button)
 	if button == "l" then
 		cur_player = nil
-		mouse_state = STATE_NONE
+		mouse_state = MSTATE_NONE
 	end
 end
 
 function love.keypressed(key, unicode)
 	-- switch teams when "T" is pressed
-	if mouse_state == STATE_NONE then
+	if mouse_state == MSTATE_NONE then
 		if key == "t" then
 			if cur_team == TEAM_BLUE then
 				cur_team = TEAM_RED
