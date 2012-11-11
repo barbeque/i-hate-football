@@ -18,6 +18,10 @@ local PLAYER_SPEED = 500
 -- specified by player.{x,y} + player.{dx,dy}
 local PLAYER_RUN_FOREVER = true
 local PLAYER_BOUNCE = true
+local PLAYER_TOP_BUFFER = 40
+local PLAYER_LEFT_BUFFER = 20
+local PLAYER_RIGHT_BUFFER = 20
+local PLAYER_BOTTOM_BUFFER = 0
 
 local TARGET_DRAW_RADIUS = 4
 local TARGET_HIT_RADIUS = 8
@@ -158,25 +162,25 @@ function love.update(dt)
 					end
 				end
 
-				if player.x < PLAYER_COLLIDE_RADIUS then
-					player.x = PLAYER_COLLIDE_RADIUS
+				if player.x < PLAYER_LEFT_BUFFER then
+					player.x = PLAYER_LEFT_BUFFER
 					if PLAYER_BOUNCE then
 						player.dx = math.abs(player.dx)
 					end
-				elseif player.x > FIELD_W-PLAYER_COLLIDE_RADIUS then
-					player.x = FIELD_W-PLAYER_COLLIDE_RADIUS
+				elseif player.x > FIELD_W-PLAYER_RIGHT_BUFFER then
+					player.x = FIELD_W-PLAYER_RIGHT_BUFFER
 					if PLAYER_BOUNCE then
 						player.dx = -math.abs(player.dx)
 					end
 				end
 
-				if player.y < PLAYER_COLLIDE_RADIUS then
-					player.y = PLAYER_COLLIDE_RADIUS
+				if player.y < PLAYER_TOP_BUFFER then
+					player.y = PLAYER_TOP_BUFFER
 					if PLAYER_BOUNCE then
 						player.dy = math.abs(player.dy)
 					end
-				elseif player.y > FIELD_H-PLAYER_COLLIDE_RADIUS then
-					player.y = FIELD_H-PLAYER_COLLIDE_RADIUS
+				elseif player.y > FIELD_H-PLAYER_BOTTOM_BUFFER then
+					player.y = FIELD_H-PLAYER_BOTTOM_BUFFER
 					if PLAYER_BOUNCE then
 						player.dy = -math.abs(player.dy)
 					end
@@ -385,14 +389,14 @@ end
 
 function restrict_to_team_area(x,y,team)
 	local minX,minY,maxX,maxY
-	minY = PLAYER_COLLIDE_RADIUS
-	maxY = FIELD_H - PLAYER_COLLIDE_RADIUS
+	minY = PLAYER_TOP_BUFFER
+	maxY = FIELD_H - PLAYER_BOTTOM_BUFFER
 	if team == TEAM_BLUE then
-		minX = PLAYER_COLLIDE_RADIUS
-		maxX = FIELD_W*0.5 - PLAYER_COLLIDE_RADIUS
+		minX = PLAYER_LEFT_BUFFER
+		maxX = FIELD_W*0.5 - PLAYER_RIGHT_BUFFER
 	else -- TEAM_RED
-		minX = FIELD_W*0.5 + PLAYER_COLLIDE_RADIUS
-		maxX = FIELD_W - PLAYER_COLLIDE_RADIUS
+		minX = FIELD_W*0.5 + PLAYER_LEFT_BUFFER
+		maxX = FIELD_W - PLAYER_RIGHT_BUFFER
 	end
 	return clamp(x, minX, maxX), clamp(y, minY, maxY)
 end
