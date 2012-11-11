@@ -319,14 +319,18 @@ function love.mousepressed(x, y, button)
 				drag_x_offset = x - (over_player.x+over_player.dx)
 				drag_y_offset = y - (over_player.y+over_player.dy)
 			else
-				mouse_state = STATE_DRAG_PLAYER
-				drag_x_offset = x - over_player.x
-				drag_y_offset = y - over_player.y
+				if game_state == GSTATE_PLACEMENT then
+					mouse_state = STATE_DRAG_PLAYER
+					drag_x_offset = x - over_player.x
+					drag_y_offset = y - over_player.y
+				end
 			end
 		else
-			place_new_player(x,y)
+			if game_state == GSTATE_PLACEMENT then
+				place_new_player(x,y)
+			end
 		end
-	elseif button == "r" then
+	elseif button == "r" and game_state == GSTATE_PLACEMENT then
 		local over_player, hit_dir_handle = hit_test(x,y,cur_team)
 		if not hit_dir_handle and over_player ~= nil then
 			remove_player(over_player)
