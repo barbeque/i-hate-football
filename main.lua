@@ -49,7 +49,7 @@ local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
 
-if false then
+if true then
 	PLAYER_RUN_FOREVER = false
 	PLAYER_BOUNCE = false
 	TURN_TIME = 0.25
@@ -101,10 +101,10 @@ function seek(curr, target, step)
 end
 
 function love.load()
-	background = love.graphics.newImage("background.png")
-	football_image = love.graphics.newImage("football.png")
-	player_blue_image = love.graphics.newImage("player_blue.png")
-	player_red_image = love.graphics.newImage("player_red.png")
+	background = love.graphics.newImage("images/background.png")
+	football_image = love.graphics.newImage("images/football.png")
+	player_blue_image = love.graphics.newImage("images/player_blue.png")
+	player_red_image = love.graphics.newImage("images/player_red.png")
 	small_font = love.graphics.newFont(12)
 	score_font = love.graphics.newFont(48)
 end
