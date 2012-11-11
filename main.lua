@@ -36,6 +36,8 @@ local STATE_DRAG_DIR = 2
 
 local background
 local football_image
+local player_blue_image
+local player_red_image
 local small_font
 local score_font
 local players = {}
@@ -47,7 +49,7 @@ local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
 
-if true then
+if false then
 	PLAYER_RUN_FOREVER = false
 	PLAYER_BOUNCE = false
 	TURN_TIME = 0.25
@@ -101,6 +103,8 @@ end
 function love.load()
 	background = love.graphics.newImage("background.png")
 	football_image = love.graphics.newImage("football.png")
+	player_blue_image = love.graphics.newImage("player_blue.png")
+	player_red_image = love.graphics.newImage("player_red.png")
 	small_font = love.graphics.newFont(12)
 	score_font = love.graphics.newFont(48)
 end
@@ -247,14 +251,16 @@ function draw_player(player)
 		love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
 	end
 
-	-- draw player circle fill
-	love.graphics.setColor(unpack(player.team.color))
-	love.graphics.circle("fill", player.x, player.y, PLAYER_RADIUS)
-
-	-- draw circle outline
-	love.graphics.setLineWidth(2)
+	-- -- draw circle outline
+	love.graphics.setLineWidth(1)
 	love.graphics.setColor(255,255,255)
 	love.graphics.circle("line", player.x, player.y, PLAYER_RADIUS, 30)
+
+	local img = player_blue_image
+	if player.team == TEAM_RED then
+		img = player_red_image
+	end
+	love.graphics.draw(img, round(player.x - 32), round(player.y - 52))
 
 	if game_state ~= GSTATE_RUNNING then
 		-- draw the point the player runs towards
@@ -264,9 +270,8 @@ function draw_player(player)
 
 	-- draw FOOTBALL
 	if player.has_football then
-		local nx, ny = normalize(player.dx, player.dy)
-		local fbx = round(player.x + nx*PLAYER_RADIUS - football_image:getWidth()*0.5)
-		local fby = round(player.y + ny*PLAYER_RADIUS - football_image:getHeight()*0.5)
+		local fbx = round(player.x + 13 - football_image:getWidth()*0.5)
+		local fby = round(player.y - 17 - football_image:getHeight()*0.5)
 		love.graphics.draw(football_image, fbx, fby)
 	end
 end
