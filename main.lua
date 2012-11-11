@@ -85,6 +85,7 @@ function love.load()
 end
 
 function love.update(dt)
+	dt = clamp(dt,0,0.1)
 	t = t + dt
 
 	if game_state == GSTATE_RUNNING then
@@ -371,6 +372,8 @@ function place_new_player(x,y)
 	end
 	table.insert(players, cur_player)
 	mouse_state = STATE_DRAG_DIR
+	drag_x_offset = 0
+	drag_y_offset = 0
 end
 
 function remove_player(p)
