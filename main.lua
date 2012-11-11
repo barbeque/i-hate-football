@@ -16,8 +16,8 @@ local PLAYERS_PER_TEAM = 5
 local PLAYER_SPEED = 500
 -- whether players keep running in original direction (true) or run to the point
 -- specified by player.{x,y} + player.{dx,dy}
-local PLAYER_RUN_FOREVER = true
-local PLAYER_BOUNCE = true
+local PLAYER_RUN_FOREVER
+local PLAYER_BOUNCE
 local PLAYER_TOP_BUFFER = 40
 local PLAYER_LEFT_BUFFER = 20
 local PLAYER_RIGHT_BUFFER = 20
@@ -29,7 +29,7 @@ local TARGET_HIT_RADIUS = 8
 local FIELD_W = 1280
 local FIELD_H = 720
 
-local TURN_TIME = 30 --0.25
+local TURN_TIME
 
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
@@ -40,6 +40,21 @@ local GSTATE_RUNNING = 2 -- the game is running. you can't do anything but cry
 local STATE_NONE = 0
 local STATE_DRAG_PLAYER = 1
 local STATE_DRAG_DIR = 2
+
+-- are we running in SHILBERT MODE? (long turns, keep running in same direction forever)
+if love.filesystem.exists("hax.lua") then
+	love.filesystem.load("hax.lua")()
+end
+
+if SHILBERT_MODE then
+	PLAYER_RUN_FOREVER = true
+	PLAYER_BOUNCE = true
+	TURN_TIME = 30
+else -- ravuya mode
+	PLAYER_RUN_FOREVER = false
+	PLAYER_BOUNCE = false
+	TURN_TIME = 0.25
+end
 
 local background
 local football_image
@@ -58,11 +73,6 @@ local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
 
-if true then
-	PLAYER_RUN_FOREVER = false
-	PLAYER_BOUNCE = false
-	TURN_TIME = 0.25
-end
 
 function length(x,y)
 	return math.sqrt(x*x + y*y)

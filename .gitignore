@@ -1,2 +1,3 @@
 # Ignore Windows shorcuts which shilbert is using to launch love
 *.lnk
+hax.lua
