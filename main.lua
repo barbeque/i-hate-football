@@ -181,7 +181,22 @@ function love.draw()
 	draw_bg()
 
 	for n, player in ipairs(players) do
-		draw_player(player)
+		draw_player_ground_stuff(player)
+	end
+
+	local players_sorted = {}
+	for n, player in ipairs(players) do
+		players_sorted[n] = player
+	end
+
+	table.sort(players_sorted, function(a,b) return a.y < b.y end)
+
+	for n, player in ipairs(players_sorted) do
+		draw_player_sprite(player)
+	end
+
+	for n, player in ipairs(players) do
+		draw_player_target(player)
 	end
 
 	draw_scores()
@@ -244,9 +259,12 @@ function draw_scores()
 	draw_single_score(TEAM_RED.score, 1280-75, 720-60)
 end
 
-function draw_player(player)
+function draw_player_ground_stuff(player)
+
+
 	if game_state ~= GSTATE_RUNNING then
 		-- draw direction line
+		love.graphics.setLineWidth(1)
 		love.graphics.setColor(255,255,255)
 		love.graphics.line(player.x, player.y, player.x+player.dx, player.y+player.dy)
 	end
@@ -255,6 +273,9 @@ function draw_player(player)
 	love.graphics.setLineWidth(1)
 	love.graphics.setColor(255,255,255)
 	love.graphics.circle("line", player.x, player.y, PLAYER_RADIUS, 30)
+end
+
+function draw_player_sprite(player)
 
 	local img = player_blue_image
 	if player.team == TEAM_RED then
@@ -262,17 +283,23 @@ function draw_player(player)
 	end
 	love.graphics.draw(img, round(player.x - 32), round(player.y - 52))
 
-	if game_state ~= GSTATE_RUNNING then
-		-- draw the point the player runs towards
-		love.graphics.setColor(255,255,255)
-		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
-	end
-
 	-- draw FOOTBALL
 	if player.has_football then
 		local fbx = round(player.x + 13 - football_image:getWidth()*0.5)
 		local fby = round(player.y - 17 - football_image:getHeight()*0.5)
 		love.graphics.draw(football_image, fbx, fby)
+	end
+end
+
+function draw_player_target(player)
+	if game_state ~= GSTATE_RUNNING then
+		-- draw the point the player runs towards
+		love.graphics.setColor(255,255,255)
+		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, 4)
+
+		love.graphics.setColor(0,0,0)
+		love.graphics.setLineWidth(1)
+		love.graphics.circle("line", player.x + player.dx, player.y + player.dy, 4)
 	end
 end
 
