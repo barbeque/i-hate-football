@@ -1,3 +1,5 @@
+require "utils"
+local Announcer = (require "announcer").Announcer
 
 -- teams
 local TEAM_BLUE = {
@@ -76,8 +78,7 @@ local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
 local touchdown_timer = 0
-
-require "utils"
+local announcer = nil
 
 function love.load()
 	background = love.graphics.newImage("images/background.png")
@@ -86,6 +87,7 @@ function love.load()
 	player_red_image = love.graphics.newImage("images/player_red.png")
 	small_font = love.graphics.newFont(12)
 	score_font = love.graphics.newFont(48)
+	announcer = Announcer:new()
 end
 
 function love.update(dt)
@@ -169,6 +171,8 @@ function love.update(dt)
 			cur_player.dy = y - cur_player.y - drag_y_offset
 		end
 	end
+
+	announcer:update(dt)
 end
 
 function love.draw()
@@ -195,6 +199,8 @@ function love.draw()
 
 	draw_scores()
 	draw_hud()
+
+	announcer:draw()
 end
 
 function draw_bg()
@@ -207,10 +213,12 @@ function draw_bg()
 		offsetY = 2.5 * math.cos(41.1 * t + beta)
 	end
 
+	love.graphics.setColor(255,255,255,255)
 	love.graphics.draw(background, offsetX, offsetY)
 end
 
 function draw_hud()
+	love.graphics.setColor(255,255,255,255)
 	love.graphics.setFont(small_font)
 	love.graphics.print("fps: "..love.timer.getFPS(), 10, 10)
 
@@ -270,6 +278,8 @@ end
 
 function draw_player_sprite(player)
 
+	love.graphics.setColor(255,255,255)
+	
 	local img = player_blue_image
 	if player.team == TEAM_RED then
 		img = player_red_image

@@ -62,3 +62,13 @@ function seek(curr, target, step)
 		return curr
 	end
 end
+
+function easeInQuad(t)
+	t = clamp(t,0,1)
+	return t*t
+end
+
+function easeOutQuad(t)
+	t = clamp(t,0,1)
+	return 1 - (1-t) * (1-t)
+end
