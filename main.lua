@@ -88,6 +88,7 @@ function love.load()
 	small_font = love.graphics.newFont(12)
 	score_font = love.graphics.newFont(48)
 	announcer = Announcer:new()
+	begin_placement()
 end
 
 function love.update(dt)
@@ -147,6 +148,7 @@ function love.update(dt)
 		if check_touchdown() then
 			local td_team = player_with_football().team
 			td_team.score = td_team.score + 1
+			announcer:say(string.format("THE %s TEAM SCORES A TOUCHDOWN!", td_team.name))
 			begin_touchdown()
 		else
 			-- when the timer runs out we're done
@@ -279,7 +281,7 @@ end
 function draw_player_sprite(player)
 
 	love.graphics.setColor(255,255,255)
-	
+
 	local img = player_blue_image
 	if player.team == TEAM_RED then
 		img = player_red_image
@@ -486,6 +488,7 @@ end
 
 function stop_running()
 	game_state = GSTATE_COACHING
+	announcer:say("DIRECT YOUR PLAYERS!")
 end
 
 function begin_touchdown()
@@ -494,10 +497,15 @@ function begin_touchdown()
 end
 
 function end_touchdown()
+	begin_placement()
+end
+
+function begin_placement()
 	game_state = GSTATE_PLACEMENT
 	for n, p in ipairs(players) do
 		players[n] = nil
 	end
+	announcer:say("THE PLAYERS ARE TAKING THE FIELD!")
 end
 
 function should_draw_player_targets()

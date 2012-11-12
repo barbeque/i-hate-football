@@ -43,7 +43,8 @@ function Announcer:new()
 	local an = {}
 	setmetatable(an, Announcer)
 	an.image = love.graphics.newImage("images/announcer.png")
-	an.text = "LET'S PLAY SOME FOOTBALL!"
+	an.new_text = nil
+	an.text = ""
 	an.state_timer = 0
 	an.font = love.graphics.newFont(32)
 	an.state = STATE_HIDDEN
@@ -55,7 +56,6 @@ end
 
 function Announcer:update(dt)
 	self.state_timer = self.state_timer + dt
-	--self.reveal_timer = clamp(self.reveal_timer + dt*TEXT_REVEAL_SPEED, 0, string.len(self.text))
 
 	self.anim_frame_timer = self.anim_frame_timer + dt
 	if self.anim_frame_timer >= FRAME_TIME then
@@ -67,8 +67,12 @@ function Announcer:update(dt)
 	end
 
 	if self.state == STATE_HIDDEN then
-		self:_changeState(STATE_SHOWING)
-		self:_startAnim(ANIM_TALK)
+		if self.new_text ~= nil then
+			self.text = self.new_text
+			self.new_text = nil
+			self:_changeState(STATE_SHOWING)
+			self:_startAnim(ANIM_TALK)
+		end
 	elseif self.state == STATE_SHOWING then
 		if self.state_timer >= SHOW_TIME then
 			self:_changeState(STATE_REVEALING_TEXT)
@@ -101,6 +105,10 @@ function Announcer:_changeState(state)
 	self.state_timer = 0
 end
 
+function Announcer:say(text)
+	self.new_text = text
+end
+
 function Announcer:_charsToShow()
 	if self.state == STATE_REVEALING_TEXT then
 		return clamp(math.floor(self.state_timer * TEXT_REVEAL_SPEED), 0, string.len(self.text))
@@ -125,7 +133,12 @@ function Announcer:_showRatio()
 end
 
 function Announcer:draw()
-	local offset = (720-ICON_TOP)*(1-self:_showRatio())
+	local ratio = self:_showRatio()
+	if ratio == 0 then
+		return
+	end
+
+	local offset = (720-ICON_TOP)*(1-ratio)
 
 	-- announcer icon
 	love.graphics.setColor(255,255,255) -- white
