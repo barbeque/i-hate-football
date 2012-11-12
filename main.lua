@@ -28,13 +28,16 @@ local TARGET_HIT_RADIUS = 8
 
 local FIELD_W = 1280
 local FIELD_H = 720
+local GOAL_ZONE_SIZE = 84
 
 local TURN_TIME
+local TOUCHDOWN_TIME = 3
 
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
 local GSTATE_COACHING = 1 -- pointing them in a direction, molesting them a little
 local GSTATE_RUNNING = 2 -- the game is running. you can't do anything but cry
+local GSTATE_TOUCHDOWN = 3 -- show some touchdown info
 
 -- mouse states
 local MSTATE_NONE = 0
@@ -72,6 +75,7 @@ local drag_y_offset = 0
 local t = 0
 local turn_time_remaining = 0
 local cur_team = TEAM_BLUE
+local touchdown_timer = 0
 
 require "utils"
 
@@ -137,12 +141,24 @@ function love.update(dt)
 
 		player_player_collisions()
 
-		-- when the timer runs out we're done
-		turn_time_remaining = turn_time_remaining - dt
-		if turn_time_remaining <= 0 then
-			stop_running()
+		-- check if player w/ ball is in the GOAL ZONE
+		if check_touchdown() then
+			local td_team = player_with_football().team
+			td_team.score = td_team.score + 1
+			begin_touchdown()
+		else
+			-- when the timer runs out we're done
+			turn_time_remaining = turn_time_remaining - dt
+			if turn_time_remaining <= 0 then
+				stop_running()
+			end
 		end
-	else
+	elseif game_state == GSTATE_TOUCHDOWN then
+		touchdown_timer = touchdown_timer + dt
+		if touchdown_timer >= TOUCHDOWN_TIME then
+			end_touchdown()
+		end
+	elseif game_state == GSTATE_PLACEMENT or game_state == GSTATE_COACHING then
 		local x, y = love.mouse.getPosition()
 		if mouse_state == MSTATE_DRAG_PLAYER then
 			cur_player.x, cur_player.y = restrict_to_team_area(x - drag_x_offset,
@@ -239,8 +255,7 @@ end
 
 function draw_player_ground_stuff(player)
 
-
-	if game_state ~= GSTATE_RUNNING then
+	if should_draw_player_targets() then
 		-- draw direction line
 		love.graphics.setLineWidth(1)
 		love.graphics.setColor(255,255,255)
@@ -270,7 +285,7 @@ function draw_player_sprite(player)
 end
 
 function draw_player_target(player)
-	if game_state ~= GSTATE_RUNNING then
+	if should_draw_player_targets() then
 		-- draw the point the player runs towards
 		love.graphics.setColor(255,255,255)
 		love.graphics.circle("fill", player.x + player.dx, player.y + player.dy, TARGET_DRAW_RADIUS)
@@ -409,6 +424,17 @@ function player_with_football()
 	return nil
 end
 
+function check_touchdown()
+	local player = player_with_football()
+	if player.team == TEAM_BLUE and player.x >= FIELD_W - GOAL_ZONE_SIZE then
+		return true
+	elseif player.team == TEAM_RED and player.y <= GOAL_ZONE_SIZE then
+		return true
+	else
+		return false
+	end
+end
+
 function player_player_collide(p1, p2)
 	local d = distance(p1.x, p1.y, p2.x, p2.y)
 	if d < PLAYER_COLLIDE_RADIUS*2 then
@@ -437,6 +463,12 @@ function player_player_collisions()
 	-- print((t1-t0)*1000)
 end
 
+function can_start_running()
+	return players_on_team(TEAM_RED) > 0 and 
+		   players_on_team(TEAM_BLUE) > 0 and 
+		   player_with_football()
+end
+
 function start_running_turn()
 	game_state = GSTATE_RUNNING
 	turn_time_remaining = TURN_TIME -- i dunno, that seems fair
@@ -444,6 +476,22 @@ end
 
 function stop_running()
 	game_state = GSTATE_COACHING
+end
+
+function begin_touchdown()
+	game_state = GSTATE_TOUCHDOWN
+	touchdown_timer = 0
+end
+
+function end_touchdown()
+	game_state = GSTATE_PLACEMENT
+	for n, p in ipairs(players) do
+		players[n] = nil
+	end
+end
+
+function should_draw_player_targets()
+	return game_state == GSTATE_PLACEMENT or game_state == GSTATE_COACHING
 end
 
 function love.mousereleased(x, y, button)
@@ -462,7 +510,9 @@ function love.keypressed(key, unicode)
 			else
 				cur_team = TEAM_BLUE
 			end
-		elseif key == "e" then
+		elseif key == "e" and 
+			(game_state == GSTATE_COACHING or game_state == GSTATE_PLACEMENT) and
+			can_start_running() then
 			-- eventually we'll do some real logic here. for now put the state in running
 			start_running_turn()
 		end
