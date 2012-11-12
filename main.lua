@@ -35,6 +35,8 @@ local GOAL_ZONE_SIZE = 84
 local TURN_TIME
 local TOUCHDOWN_TIME = 3
 
+local TOUCHDOWN_POINTS = 6
+
 -- game states
 local GSTATE_PLACEMENT = 0 -- putting dudes down AND giving them directions
 local GSTATE_COACHING = 1 -- pointing them in a direction, molesting them a little
@@ -147,7 +149,7 @@ function love.update(dt)
 		-- check if player w/ ball is in the GOAL ZONE
 		if check_touchdown() then
 			local td_team = player_with_football().team
-			td_team.score = td_team.score + 1
+			td_team.score = td_team.score + TOUCHDOWN_POINTS
 			announcer:say(string.format("THE %s TEAM SCORES A TOUCHDOWN!", td_team.name))
 			begin_touchdown()
 		else
