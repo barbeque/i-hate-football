@@ -39,6 +39,9 @@ local ANIM_TALK = {FRAME_1, FRAME_2}
 local ANIM_NO_TALK = {FRAME_2}
 local FRAME_TIME = 5/60.0
 
+-- TODO: It would be nice if the announcer's "talk" anim finished before being interrupted by NO_TALK,
+--		 to remove the case where his mouth is only open for like 1 or 2 frames.
+
 function Announcer:new()
 	local an = {}
 	setmetatable(an, Announcer)
