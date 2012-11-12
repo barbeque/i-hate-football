@@ -39,9 +39,6 @@ local ANIM_TALK = {FRAME_1, FRAME_2}
 local ANIM_NO_TALK = {FRAME_2}
 local FRAME_TIME = 5/60.0
 
--- TODO: It would be nice if the announcer's "talk" anim finished before being interrupted by NO_TALK,
---		 to remove the case where his mouth is only open for like 1 or 2 frames.
-
 function Announcer:new()
 	local an = {}
 	setmetatable(an, Announcer)
@@ -51,6 +48,7 @@ function Announcer:new()
 	an.state_timer = 0
 	an.font = love.graphics.newFont(32)
 	an.state = STATE_HIDDEN
+	an.anim_loop = false
 	an.anim = ANIM_NO_TALK
 	an.anim_frame = 1
 	an.anim_frame_timer = 0
@@ -62,10 +60,14 @@ function Announcer:update(dt)
 
 	self.anim_frame_timer = self.anim_frame_timer + dt
 	if self.anim_frame_timer >= FRAME_TIME then
-		self.anim_frame_timer = 0
-		self.anim_frame = self.anim_frame+1
-		if self.anim_frame > #(self.anim) then
-			self.anim_frame = 1
+		if self.anim_frame == #(self.anim) then
+			if self.anim_loop then
+				self.anim_frame_timer = 0
+				self.anim_frame = 1
+			end
+		else
+			self.anim_frame_timer = 0
+			self.anim_frame = self.anim_frame + 1
 		end
 	end
 
@@ -74,7 +76,7 @@ function Announcer:update(dt)
 			self.text = self.new_text
 			self.new_text = nil
 			self:_changeState(STATE_SHOWING)
-			self:_startAnim(ANIM_TALK)
+			self:_startAnim(ANIM_TALK, true)
 		end
 	elseif self.state == STATE_SHOWING then
 		if self.state_timer >= SHOW_TIME then
@@ -83,7 +85,8 @@ function Announcer:update(dt)
 	elseif self.state == STATE_REVEALING_TEXT then
 		if self:_charsToShow() >= string.len(self.text) then
 			self:_changeState(STATE_HOLD)
-			self:_startAnim(ANIM_NO_TALK)
+			-- stop looping the talk anim
+			self.anim_loop = false
 		end
 	elseif self.state == STATE_HOLD then
 		if self.state_timer >= HOLD_TIME then
@@ -96,10 +99,11 @@ function Announcer:update(dt)
 	end
 end
 
-function Announcer:_startAnim(anim)
+function Announcer:_startAnim(anim, loop)
 	self.anim = anim
 	self.anim_frame_timer = 0
 	self.anim_frame = 1
+	self.anim_loop = loop
 end
 
 function Announcer:_changeState(state)
