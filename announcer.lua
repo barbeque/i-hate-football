@@ -33,10 +33,10 @@ local SHOW_TIME = 0.25
 local HOLD_TIME = 1
 local HIDE_TIME = 0.25
 
-local FRAME_1 = love.graphics.newQuad(0, 	  0, ICON_W, ICON_H, ICON_W*2, ICON_H)
-local FRAME_2 = love.graphics.newQuad(ICON_W, 0, ICON_W, ICON_H, ICON_W*2, ICON_H)
-local ANIM_TALK = {FRAME_1, FRAME_2}
-local ANIM_NO_TALK = {FRAME_2}
+local FRAME_MOUTH_OPEN 	 = love.graphics.newQuad(0, 	 0, ICON_W, ICON_H, ICON_W*2, ICON_H)
+local FRAME_MOUTH_CLOSED = love.graphics.newQuad(ICON_W, 0, ICON_W, ICON_H, ICON_W*2, ICON_H)
+local ANIM_TALK = {FRAME_MOUTH_OPEN, FRAME_MOUTH_CLOSED}
+local ANIM_NO_TALK = {FRAME_MOUTH_CLOSED}
 local FRAME_TIME = 5/60.0
 
 function Announcer:new()
